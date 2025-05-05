@@ -52,6 +52,5 @@ root@me_dheeraj:$ bash 403-bypass.sh -u https://target.com/secret --exploit
 - apt install curl [Debian]
 
 ## To do
-- add all the ip from  
-  https://www.root-me.org/fr/Challenges/Web-Serveur/HTTP-Contournement-de-filtrage-IP?action_solution=voir#ancre_solution
-  Add an option to test either with a fake proxy (from yahoo as currently) or only using classic headers. Also make so when testing with fake proxy you also test with classic one
+  Add an option to test either with a fake proxy (from yahoo as currently) or only using classic headers. Also make so when testing with fake proxy you also test with classic one  
+  MAke so you can list the code you want to ignore (not so hard I think, just another option)
